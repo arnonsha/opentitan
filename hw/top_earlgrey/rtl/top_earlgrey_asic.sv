@@ -73,7 +73,10 @@ module top_earlgrey_asic (
   inout               CC2,
   // USB (VCC domain)
   inout               USB_P,
-  inout               USB_N
+  inout               USB_N,
+  // FLASH
+  inout [3:0]         FLASH_TEST_MODE,
+  inout               FLASH_TEST_VOLT
 
 );
 
@@ -110,8 +113,8 @@ module top_earlgrey_asic (
     .ConnectMioOut ( 44'hFFF_FFFF_FFFF ),
     // Tied off DIOs:
     // 2-8 (USB)
-    .ConnectDioIn  ( 15'h7E03 ),
-    .ConnectDioOut ( 15'h7E03 ),
+    .ConnectDioIn  ( 21'h1FFE03 ),
+    .ConnectDioOut ( 21'h1FFE03 ),
     // MIO pad types
     .MioPadVariant ( { // RBox
                        2'd3, // IOR13   -- open drain
@@ -292,7 +295,6 @@ module top_earlgrey_asic (
   logic ast_usb_core_pok;
   logic [31:0] ast_usb_calibration;
   logic [ast_wrapper_pkg::UsbCalibWidth-1:0] usb_io_pu_cal;
-  assign ast_usb_core_pok = ast_base_rst.aon_pok;
 
   prim_usb_diff_rx #(
     .CalibW(ast_wrapper_pkg::UsbCalibWidth)
@@ -375,6 +377,7 @@ module top_earlgrey_asic (
   ast_wrapper_pkg::ast_alert_rsp_t base_ast_alerts;
   ast_wrapper_pkg::ast_rst_t ast_base_rst;
   ast_wrapper_pkg::ast_clks_t ast_base_clks;
+  ast_wrapper_pkg::ast_eflash_t ast_base_eflash;
   pwrmgr_pkg::pwr_ast_req_t base_ast_pwr;
   pwrmgr_pkg::pwr_ast_rsp_t ast_base_pwr;
   ast_wrapper_pkg::ast_func_clks_rsts base_ast_aux;
@@ -403,9 +406,12 @@ module top_earlgrey_asic (
     .alert_o(ast_base_alerts),
     .status_o(ast_base_status),
     .usb_io_pu_cal_o(usb_io_pu_cal),
+    .ast_eflash_o(ast_base_eflash),
+    .scanmode_i(1'b0),
     .scan_reset_ni(1'b1)
   );
 
+  assign ast_usb_core_pok = ast_base_rst.aon_pok;
 
   //////////////////////
   // Top-level design //
@@ -454,9 +460,14 @@ module top_earlgrey_asic (
     .entropy_src_entropy_src_rng_req ( base_ast_entropy_src ),
     .entropy_src_entropy_src_rng_rsp ( ast_base_entropy_src ),
     .pinmux_aon_io_pok               ( ast_base_status      ),
+    .ast_eflash_i                    ( ast_base_eflash      ),
 
     // USB signals
     .usbdev_aon_usb_rx_enable,
+
+    // flash ports
+    .flash_test_mode_ai              ( FLASH_TEST_MODE      ),
+    .flash_test_voltage_hi           ( FLASH_TEST_VOLT      ),
 
     // DFT signals
     .scan_rst_ni     ( 1'b1          ),

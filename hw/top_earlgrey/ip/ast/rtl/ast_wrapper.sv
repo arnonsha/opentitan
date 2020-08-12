@@ -51,10 +51,14 @@ module ast_wrapper import ast_wrapper_pkg::*;
   output ast_status_t status_o,
 
   // dft related
+  input scanmode_i,
   input scan_reset_ni,
 
   // usb io calibration
-  output logic [UsbCalibWidth-1:0] usb_io_pu_cal_o
+  output logic [UsbCalibWidth-1:0] usb_io_pu_cal_o,
+
+  // IO connection to flash
+  output ast_eflash_t ast_eflash_o
 );
 
 
@@ -71,6 +75,9 @@ module ast_wrapper import ast_wrapper_pkg::*;
     .EntropyStreams(EntropyStreams),
     .AdcChannels(AdcChannels),
     .AdcDataWidth(AdcDataWidth),
+    .EntropyInWidth(EntropyInWidth),
+    .Ast2PadOutWidth(Ast2PadOutWidth),
+    .Pad2AstInWidth(Pad2AstInWidth),
     .UsbCalibWidth(UsbCalibWidth)
   ) i_ast (
     // ast interface and sync clocks / rests
@@ -115,7 +122,6 @@ module ast_wrapper import ast_wrapper_pkg::*;
 
     .clk_src_aon_o(clks_o.clk_aon),
     .clk_src_aon_val_o(pwr_o.slow_clk_val[1]),
-    .clk_src_aon_en_i(pwr_i.slow_clk_en),
 
     .clk_src_usb_o(clks_o.clk_usb),
     .clk_src_usb_val_o(),                      // need to hookup later
@@ -178,8 +184,8 @@ module ast_wrapper import ast_wrapper_pkg::*;
     .ot_alert_trig_i(alert_i.alerts_trig[0]),
 
     // flash interface
-    .flash_power_down_h_o(),
-    .flash_power_ready_h_o(),
+    .flash_power_down_h_o(ast_eflash_o.flash_power_down_h),
+    .flash_power_ready_h_o(ast_eflash_o.flash_power_ready_h),
 
     // analog debug signals
     .ast2pad_a_io(),
@@ -192,6 +198,7 @@ module ast_wrapper import ast_wrapper_pkg::*;
     .usb_io_pu_cal_o, // USB IO Pull-up Calibration Setting
 
     // dft related
+    .scan_mode_i(scanmode_i),
     .scan_reset_ni
     );
 
